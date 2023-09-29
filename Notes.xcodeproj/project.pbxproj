@@ -29,6 +29,7 @@
 		EDE302E02AC5696A00DB6981 /* KeyboardToolBarDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE302DF2AC5696A00DB6981 /* KeyboardToolBarDelegate.swift */; };
 		EDE302E22AC57A6300DB6981 /* ExtensionUINavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE302E12AC57A6300DB6981 /* ExtensionUINavigationController.swift */; };
 		EDE302E62AC5EC7900DB6981 /* CustomKeyboardDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE302E52AC5EC7900DB6981 /* CustomKeyboardDelegate.swift */; };
+		EDE302EF2AC6F7DC00DB6981 /* ExtensionUISearchController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE302EE2AC6F7DC00DB6981 /* ExtensionUISearchController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +57,7 @@
 		EDE302DF2AC5696A00DB6981 /* KeyboardToolBarDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardToolBarDelegate.swift; sourceTree = "<group>"; };
 		EDE302E12AC57A6300DB6981 /* ExtensionUINavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionUINavigationController.swift; sourceTree = "<group>"; };
 		EDE302E52AC5EC7900DB6981 /* CustomKeyboardDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomKeyboardDelegate.swift; sourceTree = "<group>"; };
+		EDE302EE2AC6F7DC00DB6981 /* ExtensionUISearchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionUISearchController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -215,6 +217,7 @@
 			isa = PBXGroup;
 			children = (
 				EDE302E12AC57A6300DB6981 /* ExtensionUINavigationController.swift */,
+				EDE302EE2AC6F7DC00DB6981 /* ExtensionUISearchController.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -328,6 +331,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EDE302EF2AC6F7DC00DB6981 /* ExtensionUISearchController.swift in Sources */,
 				EDE302AF2AC18F3A00DB6981 /* Note.swift in Sources */,
 				EDE302B32AC1928900DB6981 /* ListOfNotestView.swift in Sources */,
 				EDE3029C2AC189EC00DB6981 /* ListOfNotesVC.swift in Sources */,

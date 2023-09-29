@@ -23,6 +23,8 @@ class ListOfNotesVC: UIViewController {
         }
     }
     
+    private var filteredNotesArrayForSearch: [Note] = []
+    
     private let listOfNotesView = ListOfNotestView()
     
     // Массив заголовков разделов таблицы
@@ -30,6 +32,8 @@ class ListOfNotesVC: UIViewController {
     
     // Словарь, ключем которого является заголовок таблицы, а значением массив заметок, дата редактирования которых соответствует заголовку
     private var notesDictionary: [String: [Note]] = [:]
+    
+    private let searchController = UISearchController(searchResultsController: nil)
     
     // MARK: loadView
     override func loadView() {
@@ -46,6 +50,7 @@ class ListOfNotesVC: UIViewController {
         self.updateNotesArray()
         self.updateSectionTitles()
         self.updateNotesDictionary()
+        self.setUpSearchController()        
     }
     
     // MARK: viewWillAppear
@@ -53,6 +58,17 @@ class ListOfNotesVC: UIViewController {
         super.viewWillAppear(animated)
         self.navigationController?.setUpColors(backgroundColor: AppColors.listOfNotesViewColor.getColor(),
                                                textColor: AppColors.listOfNotesViewTextColor.getColor())
+        
+        // Данное действие необходимо, чтобы далее в методе viewDidAppear изменить на true это же свойство. Это позволяет сделать search bar видимым после загрузки экрана
+        self.navigationItem.hidesSearchBarWhenScrolling = false
+    }
+    
+    // MARK: viewDidAppear
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        // Данное действие необходимо сделать после того, как в методе viewWillAppear значение этого свойства было изменено на false. Это позволяет сделать search bar видимым после загрузки экрана
+        navigationItem.hidesSearchBarWhenScrolling = true
     }
     
     // MARK: Настройка navigation bar
@@ -67,6 +83,15 @@ class ListOfNotesVC: UIViewController {
         self.navigationItem.rightBarButtonItem = addButton
         self.navigationController?.setUpColors(backgroundColor: AppColors.listOfNotesViewColor.getColor(),
                                                textColor: AppColors.listOfNotesViewTextColor.getColor())
+    }
+    
+    // MARK: Настройка search controller
+    private func setUpSearchController() -> Void {
+        self.searchController.searchResultsUpdater = self
+        self.searchController.searchBar.searchTextField.backgroundColor = AppColors.listOfNotesSearchTextFieldColor.getColor()
+        self.searchController.obscuresBackgroundDuringPresentation = false
+        self.searchController.searchBar.placeholder = "Поиск"
+        self.navigationItem.searchController = self.searchController
     }
     
     // MARK: Переход на NoteVC
@@ -257,20 +282,31 @@ extension ListOfNotesVC {
 extension ListOfNotesVC: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        self.tableViewSectionsTitlesArray.count
+        if self.searchController.isActive && !self.searchController.isEmpty  {
+            return 1
+        } else {
+            return self.tableViewSectionsTitlesArray.count
+        }
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let customHeader = CustomHeaderForTableView(frame: .zero)
-        guard self.tableViewSectionsTitlesArray.indices.contains(section) else { return customHeader }
-        customHeader.setTitle(text: self.tableViewSectionsTitlesArray[section])
-        return customHeader
+        if !self.searchController.isActive {
+            let customHeader = CustomHeaderForTableView(frame: .zero)
+            guard self.tableViewSectionsTitlesArray.indices.contains(section) else { return customHeader }
+            customHeader.setTitle(text: self.tableViewSectionsTitlesArray[section])
+            return customHeader
+        }
+        return nil
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if self.tableViewSectionsTitlesArray.indices.contains(section) {
-            let title = self.tableViewSectionsTitlesArray[section]
-            return self.getNotesCountWhoseDateMatchesTheSectionTitle(sectionTitle: title)
+        if self.searchController.isActive && !self.searchController.isEmpty {
+            return self.filteredNotesArrayForSearch.count
+        } else {
+            if self.tableViewSectionsTitlesArray.indices.contains(section) {
+                let title = self.tableViewSectionsTitlesArray[section]
+                return self.getNotesCountWhoseDateMatchesTheSectionTitle(sectionTitle: title)
+            }
         }
         return 0
     }
@@ -284,11 +320,18 @@ extension ListOfNotesVC: UITableViewDataSource {
             cell = NoteCell(style: .default, reuseIdentifier: NoteCell.reuseId)
         }
         
-        guard self.tableViewSectionsTitlesArray.indices.contains(indexPath.section) else { return cell }
-        let title = self.tableViewSectionsTitlesArray[indexPath.section]
-        guard let notesArray = self.notesDictionary[title] else { return cell }
-        guard notesArray.indices.contains(indexPath.row) else { return cell }
-        let note = notesArray[indexPath.row]
+        var note: Note!
+        
+        if self.searchController.isActive && !self.searchController.isEmpty {
+            guard self.filteredNotesArrayForSearch.indices.contains(indexPath.row) else { return cell }
+            note = self.filteredNotesArrayForSearch[indexPath.row]
+        } else {
+            guard self.tableViewSectionsTitlesArray.indices.contains(indexPath.section) else { return cell }
+            let title = self.tableViewSectionsTitlesArray[indexPath.section]
+            guard let notesArray = self.notesDictionary[title] else { return cell }
+            guard notesArray.indices.contains(indexPath.row) else { return cell }
+            note = notesArray[indexPath.row]
+        }
         
         cell.setMainLabelText(text: note.attributedText.string)
         cell.setDateLabelText(date: note.lastEditDate)
@@ -304,11 +347,19 @@ extension ListOfNotesVC: UITableViewDataSource {
 extension ListOfNotesVC: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard self.tableViewSectionsTitlesArray.indices.contains(indexPath.section) else { return }
-        let title = self.tableViewSectionsTitlesArray[indexPath.section]
-        guard let notesArray = self.notesDictionary[title] else { return }
-        guard notesArray.indices.contains(indexPath.row) else { return }
-        let note = notesArray[indexPath.row]
+        
+        var note: Note!
+        
+        if self.searchController.isActive && !self.searchController.isEmpty {
+            guard self.filteredNotesArrayForSearch.indices.contains(indexPath.row) else { return }
+            note = self.filteredNotesArrayForSearch[indexPath.row]
+        } else {
+            guard self.tableViewSectionsTitlesArray.indices.contains(indexPath.section) else { return }
+            let title = self.tableViewSectionsTitlesArray[indexPath.section]
+            guard let notesArray = self.notesDictionary[title] else { return }
+            guard notesArray.indices.contains(indexPath.row) else { return }
+            note = notesArray[indexPath.row]
+        }
         
         self.goToNoteVC(note: note)
         self.listOfNotesView.tableView.deselectRow(at: indexPath, animated: false)
@@ -317,23 +368,31 @@ extension ListOfNotesVC: UITableViewDelegate {
     func tableView(_ tableView: UITableView,
                    trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         
-        guard self.tableViewSectionsTitlesArray.indices.contains(indexPath.section) else { return nil }
-        let sectionTitle: String = self.tableViewSectionsTitlesArray[indexPath.section]
-        guard let notesArray: [Note] = self.notesDictionary[sectionTitle] else { return nil }
-        guard notesArray.indices.contains(indexPath.row) else { return nil }
-        var selectedNote = notesArray[indexPath.row]
+        var selectedNote: Note!
+        
+        if self.searchController.isActive && !self.searchController.isEmpty {
+            guard self.filteredNotesArrayForSearch.indices.contains(indexPath.row) else { return nil }
+            selectedNote = self.filteredNotesArrayForSearch[indexPath.row]
+        } else {
+            guard self.tableViewSectionsTitlesArray.indices.contains(indexPath.section) else { return nil }
+            let sectionTitle: String = self.tableViewSectionsTitlesArray[indexPath.section]
+            guard let notesArray: [Note] = self.notesDictionary[sectionTitle] else { return nil }
+            guard notesArray.indices.contains(indexPath.row) else { return nil }
+            selectedNote = notesArray[indexPath.row]
+        }
         
         let context = self.coreDataManager.persistentContainer.viewContext
         
         // Инициализация объекта "UIContextualAction", инициирующего действие удаления ячейки
         let deleteAction = UIContextualAction(style: .destructive,
                                               title: "") { (action: UIContextualAction,
-                                                                   view: UIView,
-                                                                   bool: (@escaping (_) -> Void)) -> Void in
+                                                            view: UIView,
+                                                            bool: (@escaping (_) -> Void)) -> Void in
             NoteEntity.removeNoteEntity(note: selectedNote, context: context)
             self.updateNotesArray()
             self.updateSectionTitles()
             self.updateNotesDictionary()
+            self.updateFilteredNotesArrayForSearch()
             self.listOfNotesView.tableView.reloadData()
         }
         
@@ -342,8 +401,8 @@ extension ListOfNotesVC: UITableViewDelegate {
         // Инициализация объекта "UIContextualAction", инициирующего действие закрепления/открепления ячейки
         let attachNoteAction = UIContextualAction(style: .normal,
                                               title: "") { (action: UIContextualAction,
-                                                                   view: UIView,
-                                                                   bool: (@escaping (_) -> Void)) -> Void in
+                                                            view: UIView,
+                                                            bool: (@escaping (_) -> Void)) -> Void in
             if selectedNote.isAttached {
                 selectedNote.disattach()
             } else {
@@ -372,6 +431,27 @@ extension ListOfNotesVC: UITableViewDelegate {
         
         // Возврат конфигурации кнопок
         return actionsObject
+    }
+    
+}
+
+
+
+extension ListOfNotesVC: UISearchResultsUpdating {
+    
+    func updateSearchResults(for searchController: UISearchController) {
+        self.updateFilteredNotesArrayForSearch()
+        self.listOfNotesView.tableView.reloadData()
+    }
+    
+    private func updateFilteredNotesArrayForSearch() -> Void {
+        guard let text = self.searchController.searchBar.text else { return }
+        let filteredArray = self.notesArray.filter { note in
+            note.attributedText.string.lowercased().contains(text.lowercased())
+        }
+        self.filteredNotesArrayForSearch = filteredArray.sorted(by: {
+            $0.lastEditDate > $1.lastEditDate
+        })
     }
     
 }
