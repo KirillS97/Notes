@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22222" systemVersion="22G91" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="NoteEntity" representedClassName=".NoteEntity" syncable="YES">
+        <attribute name="attributedText" attributeType="Transformable" valueTransformerName="NSAttributedStringValueTransformer" customClassName=".NSAttributedString"/>
+        <attribute name="isAttached" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="lastEditDate" attributeType="Date" usesScalarValueType="NO"/>
+    </entity>
+</model>
